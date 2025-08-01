@@ -655,6 +655,7 @@ def main():
     unsafe_h_values = []
     cql_action_losses = []
     cql_state_losses = []
+    avg_random_cbf_values = [] 
         
     # Train CBF with periodic logging and checkpoint saving
     print("Training CCBF with Conservative CQL-inspired losses...")
@@ -669,7 +670,7 @@ def main():
         wandb.log({"step": i})
         
         # Train one step
-        acc_np, loss_np, avg_safe_h, avg_unsafe_h = trainer.train_cbf()
+        acc_np, loss_np, avg_safe_h, avg_unsafe_h,avg_random_cbf = trainer.train_cbf()
         
         # Unpack loss components for better logging
         safe_loss, unsafe_loss, deriv_loss, cql_actions_loss, cql_states_loss = loss_np
@@ -681,6 +682,7 @@ def main():
         unsafe_h_values.append(avg_unsafe_h)
         cql_action_losses.append(cql_actions_loss)
         cql_state_losses.append(cql_states_loss)
+        avg_random_cbf_values.append(avg_random_cbf)
         
         # Log metrics to wandb
         wandb.log({
@@ -696,6 +698,7 @@ def main():
             "training/safe_h_value": avg_safe_h,
             "training/unsafe_h_value": avg_unsafe_h,
             "training/h_value_gap": avg_safe_h - avg_unsafe_h,
+            "training/avg_random_cbf": avg_random_cbf, 
             "training/progress": i / config['step_count']
         })
         
@@ -725,7 +728,8 @@ def main():
         'safe_h_values': np.array(safe_h_values),
         'unsafe_h_values': np.array(unsafe_h_values),
         'cql_action_losses': np.array(cql_action_losses),
-        'cql_state_losses': np.array(cql_state_losses)
+        'cql_state_losses': np.array(cql_state_losses),
+        'avg_random_cbf_values': np.array(avg_random_cbf_values)
     }
     torch.save(metrics, 'ccbf_training_metrics.pt')
     
@@ -733,3 +737,7 @@ def main():
 
 if __name__ == "__main__": 
     main()
+    
+    # python "/Users/i.k.tabbara/Documents/python directory/simulator_custom_learn_CBF_CCBF/scripts/Train_ccbf_withlogging.py" --use_cql_actions True --cql_actions_weight 0 --temp 0.7 --detach True --num_action_samples 10 --step_count 25000 --eps_safe 0.2 --eps_unsafe 0.2 
+    # python "/Users/i.k.tabbara/Documents/python directory/simulator_custom_learn_CBF_CCBF/scripts/Train_ccbf_withlogging.py" --use_cql_actions True --cql_actions_weight 0.5 --temp 0.7 --detach True --num_action_samples 10 --step_count 25000 --eps_safe 0.2 --eps_unsafe 0.2
+        # python "/Users/i.k.tabbara/Documents/python directory/simulator_custom_learn_CBF_CCBF/scripts/Train_ccbf_withlogging.py" --use_cql_actions True --cql_actions_weight 1 --temp 0.7 --detach True --num_action_samples 10 --step_count 25000 --eps_safe 0.2 --eps_unsafe 0.2

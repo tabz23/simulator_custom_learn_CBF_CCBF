@@ -92,6 +92,9 @@ class Trainer():
         num_safe_samples = 0
         num_unsafe_samples = 0
         
+        avg_random_cbf_total = 0.0  #i added this
+        random_cbf_count = 0  #i added this
+        
         for i in range(self.opt_iter):
             relu = nn.ReLU()
             
@@ -165,6 +168,11 @@ class Trainer():
                     
                     if all_random_next_h:
                         stacked_h_values = torch.stack(all_random_next_h, dim=1)
+                        
+                        avg_random_cbf_batch = torch.mean(stacked_h_values).item()  #i added this
+                        avg_random_cbf_total += avg_random_cbf_batch  #i added this
+                        random_cbf_count += 1  #i added this
+                        
                         combined_h_values = torch.cat([stacked_h_values, actual_next_h.squeeze().unsqueeze(1)], dim=1)
 
                         logsumexp_h = self.temp * torch.logsumexp(combined_h_values/self.temp, dim=1)
@@ -208,4 +216,7 @@ class Trainer():
         avg_safe_h = total_safe_h / (num_safe_samples + 1e-5)
         avg_unsafe_h = total_unsafe_h / (num_unsafe_samples + 1e-5)
         
-        return acc_np / self.opt_iter, loss_np / self.opt_iter, avg_safe_h, avg_unsafe_h
+        # Calculate average random CBF value across all batches
+        avg_random_cbf = avg_random_cbf_total / max(random_cbf_count, 1)  #i added this
+        
+        return acc_np / self.opt_iter, loss_np / self.opt_iter, avg_safe_h, avg_unsafe_h, avg_random_cbf  #i added this - added avg_random_cbf to return
